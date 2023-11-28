@@ -1,0 +1,55 @@
+namespace: c10k-go
+
+echo-cli:
+  defines: runnable
+  metadata:
+    name: echo-cli
+    description: >-
+      A benchmarking client for establishing concurrent connections and
+      measuring round-trip time.
+    icon: https://emojiapi.dev/api/v1/robot.svg
+  containers:
+    echo-cli:
+      image: env-2758.registry.local/echo-cli:master-75aecbb
+      build: .
+      dockerfile: Dockerfile.echo-cli
+  services: {}
+  connections:
+    echo-server-connection:
+      target: c10k-go/echo-serv
+      service: tcp-echo
+      optional: true
+      description: >-
+        Connection from echo-cli to echo-serv to establish concurrent
+        connections and measure round-trip time.
+  variables: {}
+
+echo-serv:
+  defines: runnable
+  metadata:
+    name: echo-serv
+    description: >-
+      A server that listens for incoming TCP connections and echoes back
+      received data.
+    icon: https://emojiapi.dev/api/v1/robot.svg
+  containers:
+    echo-serv:
+      image: env-2758.registry.local/echo-serv:master-75aecbb
+      build: .
+      dockerfile: Dockerfile.echo-serv
+  services:
+    tcp-echo:
+      description: TCP port for echoing messages back to the client
+      container: echo-serv
+      port: 8080
+      host-port: 8080
+      publish: true
+      protocol: tcp
+  connections: {}
+  variables: {}
+
+stack:
+  defines: group
+  members:
+    - c10k-go/echo-cli
+    - c10k-go/echo-serv
